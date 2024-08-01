@@ -14,10 +14,25 @@
     "express": "^4.17.1",
     "fs": "0.0.1-security",
     "path": "^0.12.7",
+    "realm": "^10.0.0",
     "realm-web": "^1.0.0"
   },
   "devDependencies": {
     "electron": "^13.1.7",
     "electron-builder": "^22.11.7"
+  },
+  "build": {
+    "appId": "com.yourapp.id",
+    "files": [
+      "**/*",
+      "node_modules/realm/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/realm",
+        "to": "node_modules/realm",
+        "filter": ["**/*"]
+      }
+    ]
   }
 }

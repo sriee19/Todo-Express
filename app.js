@@ -18,6 +18,6 @@ const indexRoutes = require("./app/routes/index.routes");
 app.use(todoRoutes);
 app.use(indexRoutes);
 
-app.listen(8000, () => console.log("Server started listening on port: 8000"));
+app.listen(process.env.PORT, () => console.log("Server started listening on port: 8000"));
 
 module.exports = getRealm;

@@ -14,22 +14,30 @@ const TodoSchema = {
 let realmInstance;
 
 async function getRealm() {
-  if (!realmInstance) {
-    const app = new Realm.App({ id: 'todo-electron-cteedtf' });
+  const app = new Realm.App({ id: process.env.REALM_APP_ID });
+
+  try {
     const credentials = Realm.Credentials.anonymous();
-    try {
-      const user = await app.logIn(credentials);
-      realmInstance = await Realm.open({
-        schema: [TodoSchema],
-        sync: {
-          user: user
-        }
-      });
-    } catch (err) {
-      console.error('Error logging in to MongoDB Realm:', err);
-      throw err;
-    }
+    const user = await app.logIn(credentials);
+
+    realmInstance = await Realm.open({
+      schema: [TodoSchema],
+      sync: {
+        user: user,
+        flexible: true
+      }
+    });
+
+    // Add an initial subscription
+    realmInstance.subscriptions.update((mutableSubs) => {
+      mutableSubs.add(realmInstance.objects("Todo"));
+    });
+
+  } catch (err) {
+    console.error('Error logging in to MongoDB Realm:', err);
+    throw err;
   }
+
   return realmInstance;
 }
 

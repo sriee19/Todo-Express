@@ -10,11 +10,12 @@ exports.addTodo = async (req, res) => {
         _id: new ObjectId(),
         todo,
         done: false,
+        partition: realm.syncSession.config.partitionValue
       });
     });
     res.status(200).json({ message: 'Successfully added todo!' });
   } catch (err) {
-    console.error('Error adding todo:', err);
+    console.error(err);
     res.status(500).send('Internal Server Error');
   }
 };
@@ -29,7 +30,7 @@ exports.deleteTodo = async (req, res) => {
     });
     res.redirect('/');
   } catch (err) {
-    console.error('Error deleting todo:', err);
+    console.error(err);
     res.status(500).send('Internal Server Error');
   }
 };
