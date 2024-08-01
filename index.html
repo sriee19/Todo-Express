@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+</head>
+<body>
+  <input type="text" id="todoInput" placeholder="Enter TODO">
+  <button id="addTodoButton">Add TODO</button>
+  <button id="fetchTodosButton">Fetch TODOs</button>
+
+  <script>
+    document.getElementById('addTodoButton').addEventListener('click', () => {
+      const todoText = document.getElementById('todoInput').value;
+      window.electron.addTodo(todoText);
+    });
+
+    document.getElementById('fetchTodosButton').addEventListener('click', () => {
+      window.electron.fetchTodos();
+    });
+
+    window.electron.onTodos((todos) => {
+      console.log('Fetched TODOs:', todos);
+    });
+
+    window.electron.onAddTodoResponse((message) => {
+      console.log(message);
+    });
+  </script>
+</body>
+</html>

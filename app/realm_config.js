@@ -20,19 +20,15 @@ async function getRealm() {
     const credentials = Realm.Credentials.anonymous();
     const user = await app.logIn(credentials);
 
+    console.log('User logged in:', user);
+
     realmInstance = await Realm.open({
       schema: [TodoSchema],
       sync: {
         user: user,
-        flexible: true
+        flexible: true 
       }
     });
-
-    // Add an initial subscription
-    realmInstance.subscriptions.update((mutableSubs) => {
-      mutableSubs.add(realmInstance.objects("Todo"));
-    });
-
   } catch (err) {
     console.error('Error logging in to MongoDB Realm:', err);
     throw err;
