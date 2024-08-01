@@ -1,6 +1,6 @@
 {
     "MONGO_URI": "mongodb+srv://srisanjana:Sriee@1920@cluster0.lyyphz8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
     "DB_NAME": "TodoApp",
-    "PORT": 5000
+    "PORT": 8000
   }
   

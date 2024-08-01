@@ -1,30 +1,35 @@
-const Todo = require('../models/Todo');
+const { ObjectId } = require('bson');
+const getRealm = require('../realm_config');
 
 exports.addTodo = async (req, res) => {
-  // console.log('Request body:', req.body);
   const { todo } = req.body;
   try {
-    const newTodo = new Todo({
-      todo
+    const realm = await getRealm();
+    realm.write(() => {
+      realm.create('Todo', {
+        _id: new ObjectId(),
+        todo,
+        done: false,
+      });
     });
-    await newTodo.save();
-    console.log("Successfully added todo!");
-    res.status(200).json({Todo:newTodo});
-    // res.redirect('/');
+    res.status(200).json({ message: 'Successfully added todo!' });
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Internal Server Error");
+    console.error('Error adding todo:', err);
+    res.status(500).send('Internal Server Error');
   }
 };
 
 exports.deleteTodo = async (req, res) => {
   const { _id } = req.params;
   try {
-    await Todo.deleteOne({ _id });
-    console.log("Deleted Todo Successfully!");
+    const realm = await getRealm();
+    realm.write(() => {
+      const todo = realm.objectForPrimaryKey('Todo', new ObjectId(_id));
+      realm.delete(todo);
+    });
     res.redirect('/');
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Internal Server Error");
+    console.error('Error deleting todo:', err);
+    res.status(500).send('Internal Server Error');
   }
 };

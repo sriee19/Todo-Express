@@ -1,16 +1,23 @@
 {
-  "name": "todo-app",
+  "name": "todo-express",
   "version": "1.0.0",
-  "description": "A simple ToDo app with MongoDB, Express, and EJS",
-  "main": "index.js",
+  "description": "Todo app with Electron and Express",
+  "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "build": "pkg app.js --target node18-win-x64"
+    "start": "concurrently \"node app.js\" \"electron .\"",
+    "build": "electron-builder"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "ejs": "^3.1.6",
+    "bson": "^4.5.0",
+    "concurrently": "^6.2.0",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "mongoose": "^5.12.3"
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "realm-web": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^13.1.7",
+    "electron-builder": "^22.11.7"
   }
 }
