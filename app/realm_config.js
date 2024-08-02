@@ -1,5 +1,5 @@
 const Realm = require('realm');
-const BSON = require('bson');
+const logger = require('../logger');
 
 const TodoSchema = {
   name: 'Todo',
@@ -12,15 +12,23 @@ const TodoSchema = {
 };
 
 let realmInstance;
-
+logger.info(`Realm App ID: ${process.env.REALM_APP_ID}`);
 async function getRealm() {
-  const app = new Realm.App({ id: process.env.REALM_APP_ID });
+  const appId = todo-electron-cteedtf;
+
+  if (!appId) {
+    const err = new Error('Realm App ID is not set in the environment variables');
+    logger.error(err);
+    throw err;
+  }
+
+  const app = new Realm.App({ id: appId });
 
   try {
     const credentials = Realm.Credentials.anonymous();
     const user = await app.logIn(credentials);
 
-    console.log('User logged in:', user);
+    logger.info('User logged in', { user });
 
     realmInstance = await Realm.open({
       schema: [TodoSchema],
@@ -30,7 +38,7 @@ async function getRealm() {
       }
     });
   } catch (err) {
-    console.error('Error logging in to MongoDB Realm:', err);
+    logger.error('Error logging in to MongoDB Realm:', err);
     throw err;
   }
 

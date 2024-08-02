@@ -1,9 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const BSON = require('bson');
 require('dotenv').config();
-const getRealm = require('./app/realm_config');
-// const { BSON } = require('realm');
+const logger = require('./logger'); 
 
 let mainWindow;
 
@@ -22,34 +20,38 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+  logger.info('Application is ready');
+  createWindow();
+});
+
+// Import your todo controllers
+const { addTodo, fetchTodos } = require('./app/controllers/todo.controllers');
 
 ipcMain.on('add-todo', async (event, todoText) => {
   try {
-    const realm = await getRealm();
-    realm.write(() => {
-      realm.create('Todo', {
-        _id: new BSON.ObjectId(),
-        todo: todoText,
-        done: false
-      });
+    await addTodo({ body: { todo: todoText } }, {
+      status: () => ({
+        json: (response) => event.reply('add-todo-response', response.message),
+        send: (message) => event.reply('add-todo-response', message),
+      }),
     });
-    event.reply('add-todo-response', 'Successfully added TODO');
   } catch (err) {
-    console.error('Error adding TODO:', err);
+    logger.error('Error adding TODO:', err);
     event.reply('add-todo-response', 'Error adding TODO');
   }
 });
 
 ipcMain.on('fetch-todos', async (event) => {
   try {
-    const realm = await getRealm();
-    const todos = realm.objects('Todo');
-    event.reply('todos', todos);
+    await fetchTodos({}, {
+      status: () => ({
+        json: (todos) => event.reply('todos', todos),
+        send: (message) => event.reply('todos', message),
+      }),
+    });
   } catch (err) {
-    console.error('Error fetching TODOs:', err);
+    logger.error('Error fetching TODOs:', err);
     event.reply('todos', []);
   }
 });
-
-module.exports = getRealm;

@@ -15,7 +15,8 @@
     "fs": "0.0.1-security",
     "path": "^0.12.7",
     "realm": "^10.0.0",
-    "realm-web": "^1.0.0"
+    "realm-web": "^1.0.0",
+    "winston": "^3.13.1"
   },
   "devDependencies": {
     "electron": "^13.1.7",
@@ -31,7 +32,9 @@
       {
         "from": "node_modules/realm",
         "to": "node_modules/realm",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ]
   }
