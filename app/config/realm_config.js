@@ -1,5 +1,5 @@
 const Realm = require('realm');
-const logger = require('../logger');
+const logger = require('./logger');
 
 const TodoSchema = {
   name: 'Todo',
@@ -12,9 +12,9 @@ const TodoSchema = {
 };
 
 let realmInstance;
-logger.info(`Realm App ID: ${process.env.REALM_APP_ID}`);
+
 async function getRealm() {
-  const appId = todo-electron-cteedtf;
+  const appId = 'todo-electron-cteedtf';
 
   if (!appId) {
     const err = new Error('Realm App ID is not set in the environment variables');
@@ -37,6 +37,12 @@ async function getRealm() {
         flexible: true 
       }
     });
+
+    
+    const todosSubscription = await realmInstance.subscriptions.update(mutableSubs => {
+      mutableSubs.add(realmInstance.objects('Todo'));
+    });
+
   } catch (err) {
     logger.error('Error logging in to MongoDB Realm:', err);
     throw err;

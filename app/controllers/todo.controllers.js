@@ -1,7 +1,7 @@
-const { ObjectId } = require('bson');
-const getRealm = require('../realm_config');
-const logger = require('../../logger');
+const getRealm = require('../config/realm_config');
+const logger = require('../config/logger');
 const BSON = require('bson');
+
 exports.addTodo = async (req, res) => {
   const { todo } = req.body; 
   try {
@@ -9,7 +9,7 @@ exports.addTodo = async (req, res) => {
     realm.write(() => {
       realm.create('Todo', {
         _id: new BSON.ObjectId(),
-        todo: todoText,
+        todo,
         done: false
       });
     });
@@ -33,5 +33,3 @@ exports.fetchTodos = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
-
-module.exports = getRealm;

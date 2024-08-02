@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 require('dotenv').config();
-const logger = require('./logger'); 
+const logger = require('./app/config/logger'); 
 
 let mainWindow;
 
@@ -10,14 +10,14 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, './app/config/preload.js'),
       contextIsolation: true,
       enableRemoteModule: false,
       nodeIntegration: false
     }
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('./app/view/index.html');
 }
 
 app.on('ready', () => {
