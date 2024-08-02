@@ -3,3 +3,5 @@ node_modules
 audit.log
 dist
 mongodb-realm
+local_realm.lock
+local_realm
