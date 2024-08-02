@@ -36,7 +36,7 @@ async function getRealm() {
         user: user,
         flexible: true,
       },
-      path: 'local_realm',
+      path: 'local_realm', 
       onError: (err) => {
         logger.error('Realm sync error:', err);
       }
@@ -52,7 +52,7 @@ async function getRealm() {
     // Open local Realm in case of network issues
     realmInstance = await Realm.open({
       schema: [TodoSchema],
-      path: 'local_realm'
+      path: 'local_realm' 
     });
   }
 

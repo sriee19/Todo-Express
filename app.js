@@ -63,8 +63,20 @@ function checkNetworkStatus() {
     mainWindow.webContents.send('network-status', isOnline);
     if (isOnline) {
       logger.info('Network status: online');
+      syncLocalData();
     } else {
       logger.info('Network status: offline');
     }
   });
+}
+
+async function syncLocalData() {
+  try {
+    const realm = await getRealm();
+    // Trigger Realm sync
+    await realm.syncSession.uploadAllLocalChanges();
+    logger.info('Local data synced to MongoDB Atlas');
+  } catch (err) {
+    logger.error('Error syncing local data:', err);
+  }
 }
