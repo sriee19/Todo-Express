@@ -8,6 +8,7 @@
   <input type="text" id="todoInput" placeholder="Enter TODO">
   <button id="addTodoButton">Add TODO</button>
   <button id="fetchTodosButton">Fetch TODOs</button>
+  <ul id="todoList"></ul>
 
   <script>
     document.getElementById('addTodoButton').addEventListener('click', () => {
@@ -20,11 +21,23 @@
     });
 
     window.electron.onTodos((todos) => {
+      const todoList = document.getElementById('todoList');
+      todoList.innerHTML = '';
+      todos.forEach(todo => {
+        const listItem = document.createElement('li');
+        listItem.textContent = todo.todo;
+        todoList.appendChild(listItem);
+      });
       console.log('Fetched TODOs:', todos);
     });
 
     window.electron.onAddTodoResponse((message) => {
       console.log(message);
+    });
+
+    window.electron.onNetworkStatus((status) => {
+      console.log('Network status:', status);
+      // Optionally update UI based on network status
     });
   </script>
 </body>

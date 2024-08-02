@@ -3,7 +3,7 @@ const logger = require('../config/logger');
 const BSON = require('bson');
 
 exports.addTodo = async (req, res) => {
-  const { todo } = req.body; 
+  const { todo } = req.body;
   try {
     const realm = await getRealm();
     realm.write(() => {
@@ -26,8 +26,13 @@ exports.fetchTodos = async (req, res) => {
   try {
     const realm = await getRealm();
     const todos = realm.objects('Todo');
-    logger.info('Fetched TODOs', { count: todos.length });
-    res.status(200).json(todos);
+    const todosPlain = todos.map(todo => ({
+      _id: todo._id.toHexString(), // Convert ObjectId to string
+      todo: todo.todo,
+      done: todo.done
+    }));
+    logger.info('Fetched TODOs', { count: todosPlain.length });
+    res.status(200).json(todosPlain);
   } catch (err) {
     logger.error('Error fetching TODOs:', err);
     res.status(500).send('Internal Server Error');

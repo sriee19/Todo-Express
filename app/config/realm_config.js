@@ -1,5 +1,5 @@
 const Realm = require('realm');
-const logger = require('./logger');
+const logger = require('../config/logger');
 
 const TodoSchema = {
   name: 'Todo',
@@ -34,18 +34,27 @@ async function getRealm() {
       schema: [TodoSchema],
       sync: {
         user: user,
-        flexible: true 
+        flexible: true
+      },
+      path: 'local_realm', 
+      onError: (err) => {
+        logger.error('Realm sync error:', err);
       }
     });
 
-    
-    const todosSubscription = await realmInstance.subscriptions.update(mutableSubs => {
+    // Create a subscription to the Todo class
+    await realmInstance.subscriptions.update(mutableSubs => {
       mutableSubs.add(realmInstance.objects('Todo'));
     });
 
   } catch (err) {
     logger.error('Error logging in to MongoDB Realm:', err);
-    throw err;
+
+    // Open local Realm in case of network issues
+    realmInstance = await Realm.open({
+      schema: [TodoSchema],
+      path: 'local_realm' 
+    });
   }
 
   return realmInstance;
