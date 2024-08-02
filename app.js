@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 require('dotenv').config();
-const logger = require('./app/config/logger'); 
+const logger = require('./app/config/logger');
 
 let mainWindow;
 
@@ -23,9 +23,10 @@ function createWindow() {
 app.on('ready', () => {
   logger.info('Application is ready');
   createWindow();
+
+  setInterval(checkNetworkStatus, 5000); // Check network status every 5 seconds
 });
 
-// Import your todo controllers
 const { addTodo, fetchTodos } = require('./app/controllers/todo.controllers');
 
 ipcMain.on('add-todo', async (event, todoText) => {
@@ -55,3 +56,15 @@ ipcMain.on('fetch-todos', async (event) => {
     event.reply('todos', []);
   }
 });
+
+function checkNetworkStatus() {
+  require('dns').resolve('www.google.com', (err) => {
+    const isOnline = !err;
+    mainWindow.webContents.send('network-status', isOnline);
+    if (isOnline) {
+      logger.info('Network status: online');
+    } else {
+      logger.info('Network status: offline');
+    }
+  });
+}

@@ -27,7 +27,7 @@ exports.fetchTodos = async (req, res) => {
     const realm = await getRealm();
     const todos = realm.objects('Todo');
     const todosPlain = todos.map(todo => ({
-      _id: todo._id.toHexString(), // Convert ObjectId to string
+      _id: todo._id.toHexString(),
       todo: todo.todo,
       done: todo.done
     }));

@@ -34,15 +34,14 @@ async function getRealm() {
       schema: [TodoSchema],
       sync: {
         user: user,
-        flexible: true
+        flexible: true,
       },
-      path: 'local_realm', 
+      path: 'local_realm',
       onError: (err) => {
         logger.error('Realm sync error:', err);
       }
     });
 
-    // Create a subscription to the Todo class
     await realmInstance.subscriptions.update(mutableSubs => {
       mutableSubs.add(realmInstance.objects('Todo'));
     });
@@ -53,7 +52,7 @@ async function getRealm() {
     // Open local Realm in case of network issues
     realmInstance = await Realm.open({
       schema: [TodoSchema],
-      path: 'local_realm' 
+      path: 'local_realm'
     });
   }
 
