@@ -1,4 +1,4 @@
-const getRealm = require('../../app');
+const getRealm = require('../config/realm_config');
 
 exports.getAllTodos = async (req, res) => {
   try {

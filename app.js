@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 require('dotenv').config();
 const logger = require('./app/config/logger');
+const getRealm = require('./app/config/realm_config');
 
 let mainWindow;
 
@@ -24,7 +25,7 @@ app.on('ready', () => {
   logger.info('Application is ready');
   createWindow();
 
-  setInterval(checkNetworkStatus, 5000); // Check network status every 5 seconds
+  setInterval(checkNetworkStatus, 5000); 
 });
 
 const { addTodo, fetchTodos } = require('./app/controllers/todo.controllers');
@@ -73,7 +74,6 @@ function checkNetworkStatus() {
 async function syncLocalData() {
   try {
     const realm = await getRealm();
-    // Trigger Realm sync
     await realm.syncSession.uploadAllLocalChanges();
     logger.info('Local data synced to MongoDB Atlas');
   } catch (err) {
