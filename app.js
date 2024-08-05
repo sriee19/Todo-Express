@@ -3,6 +3,7 @@ const path = require('path');
 require('dotenv').config();
 const logger = require('./app/config/logger');
 const getRealm = require('./app/config/realm_config');
+const dns = require('dns');
 
 let mainWindow;
 
@@ -24,11 +25,9 @@ function createWindow() {
 app.on('ready', () => {
   logger.info('Application is ready');
   createWindow();
-
-  setInterval(checkNetworkStatus, 5000); 
 });
 
-const { addTodo, fetchTodos } = require('./app/controllers/todo.controllers');
+const { addTodo, fetchCloudTodos, fetchTodosFromLocal } = require('./app/controllers/todo.controllers');
 
 ipcMain.on('add-todo', async (event, todoText) => {
   try {
@@ -38,6 +37,11 @@ ipcMain.on('add-todo', async (event, todoText) => {
         send: (message) => event.reply('add-todo-response', message),
       }),
     });
+    checkNetworkStatus((isOnline) => {
+      if (isOnline) {
+        syncLocalData();
+      }
+    });
   } catch (err) {
     logger.error('Error adding TODO:', err);
     event.reply('add-todo-response', 'Error adding TODO');
@@ -45,30 +49,56 @@ ipcMain.on('add-todo', async (event, todoText) => {
 });
 
 ipcMain.on('fetch-todos', async (event) => {
-  try {
-    await fetchTodos({}, {
-      status: () => ({
-        json: (todos) => event.reply('todos', todos),
-        send: (message) => event.reply('todos', message),
-      }),
-    });
-  } catch (err) {
-    logger.error('Error fetching TODOs:', err);
-    event.reply('todos', []);
-  }
-});
-
-function checkNetworkStatus() {
-  require('dns').resolve('www.google.com', (err) => {
-    const isOnline = !err;
-    mainWindow.webContents.send('network-status', isOnline);
+  checkNetworkStatus(async (isOnline) => {
     if (isOnline) {
       logger.info('Network status: online');
-      syncLocalData();
+      await fetchCloudTodos({}, {
+        status: () => ({
+          json: async (todos) => {
+            await storeInLocalDatabase(todos);
+            const allTodos = await fetchTodosFromLocal();
+            event.reply('todos', allTodos);
+          },
+          send: (message) => event.reply('todos', message),
+        }),
+      });
     } else {
       logger.info('Network status: offline');
+      try {
+        const allTodos = await fetchTodosFromLocal();
+        event.reply('todos', allTodos);
+      } catch (err) {
+        logger.error('Error fetching TODOs:', err);
+        event.reply('todos', 'Error fetching TODOs');
+      }
     }
   });
+});
+
+
+function checkNetworkStatus(callback) {
+  dns.resolve('www.google.com', (err) => {
+    const isOnline = !err;
+    mainWindow.webContents.send('network-status', isOnline);
+    callback(isOnline);
+  });
+}
+
+async function storeInLocalDatabase(todos) {
+  try {
+    const realm = await getRealm();
+    realm.write(() => {
+      todos.forEach(todo => {
+        realm.create('Todo', {
+          _id: new BSON.ObjectId(todo._id),
+          todo: todo.todo,
+          done: todo.done
+        }, 'modified');
+      });
+    });
+  } catch (err) {
+    logger.error('Error storing data in local database:', err);
+  }
 }
 
 async function syncLocalData() {

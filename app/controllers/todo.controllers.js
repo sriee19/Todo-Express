@@ -22,7 +22,7 @@ exports.addTodo = async (req, res) => {
   }
 };
 
-exports.fetchTodos = async (req, res) => {
+exports.fetchTodosFromLocal = async () => {
   try {
     const realm = await getRealm();
     const todos = realm.objects('Todo');
@@ -32,9 +32,27 @@ exports.fetchTodos = async (req, res) => {
       done: todo.done
     }));
     logger.info('Fetched TODOs', { count: todosPlain.length });
-    res.status(200).json(todosPlain);
+    return todosPlain;
   } catch (err) {
     logger.error('Error fetching TODOs:', err);
+    throw err;
+  }
+};
+
+
+exports.fetchCloudTodos = async (req, res) => {
+  try {
+    const todos = await fetchTodosFromCloud();
+    res.status(200).json(todos);
+  } catch (err) {
+    logger.error('Error fetching TODOs from cloud:', err);
     res.status(500).send('Internal Server Error');
   }
 };
+
+async function fetchTodosFromCloud() {
+  return [
+    { _id: new BSON.ObjectId(), todo: 'Example Cloud TODO 1', done: false },
+    { _id: new BSON.ObjectId(), todo: 'Example Cloud TODO 2', done: true }
+  ];
+}
