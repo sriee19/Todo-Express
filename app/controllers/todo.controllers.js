@@ -115,7 +115,14 @@ async function storeInLocalDatabase(todos) {
   try {
     const realm = await getRealm();
     logger.info('Starting to store data in local database');
-    
+
+    // Clear the local database before storing new data
+    realm.write(() => {
+      realm.deleteAll();
+    });
+
+    logger.info('Local database cleared successfully');
+
     realm.write(() => {
       todos.forEach(todo => {
         logger.info('Storing todo', { todo });
@@ -133,6 +140,7 @@ async function storeInLocalDatabase(todos) {
     throw err;
   }
 }
+
 
 async function syncLocalData() {
   try {

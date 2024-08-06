@@ -1,6 +1,7 @@
 const Realm = require('realm');
 const logger = require('../config/logger');
-const path = require("path");
+const path = require('path');
+const { app } = require('electron');
 
 const TodoSchema = {
   name: 'Todo',
@@ -16,6 +17,7 @@ let realmInstance;
 
 async function getRealm() {
   const appId = 'todo-electron-cteedtf';
+
 
   if (!appId) {
     const err = new Error('Realm App ID is not set in the environment variables');
@@ -54,19 +56,19 @@ async function getRealm() {
 
     } catch (err) {
       logger.error('Error connecting to MongoDB Realm:', err);
-      
-      // Open local Realm if there are network issues
-      try {
-        realmInstance = await Realm.open({
-          schema: [TodoSchema],
-          path: 'local_realm'
-        });
 
-        logger.info('Opened local Realm due to network issues.');
-      } catch (localErr) {
-        logger.error('Error opening local Realm:', localErr);
-        throw localErr;
-      }
+      // Open local Realm if there are network issues
+      // try {
+      //   realmInstance = await Realm.open({
+      //     schema: [TodoSchema],
+      //     path: 'local_realm'
+      //   });
+
+      //   logger.info('Opened local Realm due to network issues.');
+      // } catch (localErr) {
+      //   logger.error('Error opening local Realm:', localErr);
+      //   throw localErr;
+      // }
     }
   }
 
@@ -74,27 +76,22 @@ async function getRealm() {
 }
 module.exports = getRealm;
 
+async function clearLocalDatabase() {
+  try {
+    const realm = await Realm.open({
+      path: 'local_realm',
+      schema: [TodoSchema],
+    });
 
-// async function clearLocalDatabase() {
-//   try {
-//     // Open the local Realm
-//     const realm = await Realm.open({
-//       path: "local_realm",
-//       schema: [TodoSchema],
-//     });
+    realm.write(() => {
+      realm.deleteAll();
+    });
 
-//     // Begin a write transaction
-//     realm.write(() => {
-//       // Delete all objects from the Realm
-//       realm.deleteAll();
-//     });
+    logger.info('Local database cleared successfully');
+    realm.close();
+  } catch (err) {
+    logger.error('Failed to clear local database:', err);
+  }
+}
 
-//     console.log("Local database cleared successfully");
-
-//     // Close the Realm
-//     realm.close();
-//   } catch (err) {
-//     console.error("Failed to clear local database:", err);
-//   }
-// }
 // clearLocalDatabase();

@@ -1,8 +1,14 @@
 const winston = require('winston');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 
-// Configure logger
+const logFilePath = path.join(os.homedir(), 'todo-logs/app.log');
+
+if (fs.existsSync(logFilePath)) {
+  fs.unlinkSync(logFilePath);
+}
+
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -13,7 +19,7 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: path.join(os.homedir(), 'todo-logs/app.log') }),
+    new winston.transports.File({ filename: logFilePath }),
   ],
 });
 
