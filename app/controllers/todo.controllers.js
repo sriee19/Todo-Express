@@ -19,10 +19,10 @@ exports.addTodo = async (req, res) => {
     res.status(200).json({ message: 'Successfully added todo!' });
 
     // Check network status to sync data if online
-    // const isOnline = await checkNetworkStatus();
-    // if (isOnline) {
-    //   await syncLocalData();
-    // }
+    const isOnline = await checkNetworkStatus();
+    if (isOnline) {
+      await syncLocalData();
+    }
   } catch (err) {
     logger.error('Error adding todo:', err);
     res.status(500).send('Internal Server Error');
@@ -40,9 +40,17 @@ exports.fetchTodos = async (req, res) => {
       // await syncLocalData();
       return res.status(200).json(cloudTodos);
     } else {
-      logger.info('Client offline');
-      const localTodos = await fetchTodosFromLocal();
-      return res.status(200).json(localTodos);
+      try {
+        const todos = await fetchTodosFromLocal();
+        if (!todos || todos.length === 0) {
+          logger.warn('No TODOs returned from local database fetch');
+        }
+        return res.status(200).json(todos);
+      } catch (err) {
+        logger.error('Error in fetchTodos:', err);
+        return res.status(500).send('Internal Server Error');
+      }
+      
     }
   } catch (err) {
     logger.error('Error fetching TODOs:', err);
@@ -79,19 +87,29 @@ async function fetchTodosFromCloud() {
 async function fetchTodosFromLocal() {
   try {
     const realm = await getRealm();
+    logger.info('Realm instance retrieved for local fetch');
+    
     const todos = realm.objects('Todo');
+    if (todos.length === 0) {
+      logger.warn('No TODOs found in local database');
+    } else {
+      logger.info(`Found ${todos.length} TODOs in local database`);
+    }
+    
     const todosPlain = todos.map(todo => ({
       _id: todo._id.toHexString(),
       todo: todo.todo,
       done: todo.done
     }));
-    logger.info('Fetched TODOs from local database', todosPlain);
+    
+    logger.info('Fetched TODOs from local database:', todosPlain);
     return todosPlain;
   } catch (err) {
     logger.error('Error fetching TODOs from local database:', err);
     throw err;
   }
 }
+
 
 async function storeInLocalDatabase(todos) {
   try {

@@ -1,6 +1,7 @@
 const Realm = require('realm');
 const logger = require('../config/logger');
 const path = require("path");
+
 const TodoSchema = {
   name: 'Todo',
   properties: {
@@ -71,14 +72,14 @@ async function getRealm() {
 
   return realmInstance;
 }
+module.exports = getRealm;
 
-// const realmPath = path.resolve(__dirname, "local_realm");
 
 // async function clearLocalDatabase() {
 //   try {
 //     // Open the local Realm
 //     const realm = await Realm.open({
-//       path: "localRealm",
+//       path: "local_realm",
 //       schema: [TodoSchema],
 //     });
 
@@ -96,5 +97,4 @@ async function getRealm() {
 //     console.error("Failed to clear local database:", err);
 //   }
 // }
-
-module.exports = getRealm;
+// clearLocalDatabase();
