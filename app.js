@@ -2,9 +2,12 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 require('dotenv').config();
 const logger = require('./app/config/logger');
+const getRealm = require('./app/config/realm_config');
+const dns = require('dns');
 
 let mainWindow;
 
+// Create a new BrowserWindow
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -13,18 +16,42 @@ function createWindow() {
       preload: path.join(__dirname, './app/config/preload.js'),
       contextIsolation: true,
       enableRemoteModule: false,
-      nodeIntegration: false
-    }
+      nodeIntegration: false,
+    },
   });
 
   mainWindow.loadFile('./app/view/index.html');
 }
 
+// Handle the 'ready' event to create the main window
 app.on('ready', () => {
   logger.info('Application is ready');
   createWindow();
+  
+  // Periodically check network status and sync data if online
+  setInterval(async () => {
+    const isOnline = await checkNetworkStatus();
+    if (isOnline) {
+      logger.info('Network is online. Syncing cloud data to local...');
+      try {
+        await getRealm(true);  // Force sync when online
+      } catch (err) {
+        logger.error('Error syncing data:', err);
+      }
+    }
+  }, 5000);  // Check every 5 seconds
 });
 
+// Check network status
+async function checkNetworkStatus() {
+  return new Promise((resolve) => {
+    dns.resolve('www.google.com', (err) => {
+      resolve(!err);
+    });
+  });
+}
+
+// IPC handlers
 const { addTodo, fetchTodos } = require('./app/controllers/todo.controllers');
 
 ipcMain.on('add-todo', async (event, todoText) => {

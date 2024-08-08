@@ -3,6 +3,14 @@ const logger = require('../config/logger');
 const BSON = require('bson');
 const dns = require('dns');
 
+async function checkNetworkStatus() {
+  return new Promise((resolve) => {
+    dns.resolve('www.google.com', (err) => {
+      resolve(!err);
+    });
+  });
+}
+
 exports.addTodo = async (req, res) => {
   const { todo } = req.body;
   try {
@@ -11,16 +19,14 @@ exports.addTodo = async (req, res) => {
       realm.create('Todo', {
         _id: new BSON.ObjectId(),
         todo,
-        done: false
+        done: false,
       });
     });
 
     logger.info('Successfully added todo');
     res.status(200).json({ message: 'Successfully added todo!' });
 
-    // Check network status to sync data if online
-    const isOnline = await checkNetworkStatus();
-    if (isOnline) {
+    if (realm.syncSession) {
       await syncLocalData();
     }
   } catch (err) {
@@ -32,50 +38,40 @@ exports.addTodo = async (req, res) => {
 exports.fetchTodos = async (req, res) => {
   try {
     const isOnline = await checkNetworkStatus();
+    const realm = await getRealm();
 
     if (isOnline) {
       logger.info('Client online');
-      const cloudTodos = await fetchTodosFromCloud();
-      await storeInLocalDatabase(cloudTodos);
-      // await syncLocalData();
-      return res.status(200).json(cloudTodos);
-    } else {
       try {
-        const todos = await fetchTodosFromLocal();
-        if (!todos || todos.length === 0) {
-          logger.warn('No TODOs returned from local database fetch');
-        }
-        return res.status(200).json(todos);
+        const cloudTodos = await fetchTodosFromCloud(realm);
+        await storeInLocalDatabase(cloudTodos);
+        return res.status(200).json(cloudTodos);
       } catch (err) {
-        logger.error('Error in fetchTodos:', err);
-        return res.status(500).send('Internal Server Error');
+        logger.error('Error fetching TODOs from cloud:', err);
+        // Fallback to local data if cloud fetch fails
+        const todos = await fetchTodosFromLocal(realm);
+        return res.status(200).json(todos);
       }
-      
+    } else {
+      logger.info('Client offline');
+      const todos = await fetchTodosFromLocal(realm);
+      return res.status(200).json(todos);
     }
   } catch (err) {
     logger.error('Error fetching TODOs:', err);
-    return res.status(500).send('Internal Server Error');
+    res.status(500).send('Internal Server Error');
   }
 };
 
-async function checkNetworkStatus() {
-  return new Promise((resolve) => {
-    dns.resolve('www.google.com', (err) => {
-      resolve(!err);
-    });
-  });
-}
 
-async function fetchTodosFromCloud() {
+async function fetchTodosFromCloud(realm) {
   try {
-    const realm = await getRealm();
     const todos = realm.objects('Todo');
     const todosPlain = todos.map(todo => ({
       _id: todo._id.toHexString(),
       todo: todo.todo,
-      done: todo.done
+      done: todo.done,
     }));
-    
     logger.info('Fetched TODOs from cloud:', todosPlain);
     return todosPlain;
   } catch (err) {
@@ -84,24 +80,15 @@ async function fetchTodosFromCloud() {
   }
 }
 
-async function fetchTodosFromLocal() {
+async function fetchTodosFromLocal(realm) {
   try {
-    const realm = await getRealm();
     logger.info('Realm instance retrieved for local fetch');
-    
     const todos = realm.objects('Todo');
-    if (todos.length === 0) {
-      logger.warn('No TODOs found in local database');
-    } else {
-      logger.info(`Found ${todos.length} TODOs in local database`);
-    }
-    
     const todosPlain = todos.map(todo => ({
       _id: todo._id.toHexString(),
       todo: todo.todo,
-      done: todo.done
+      done: todo.done,
     }));
-    
     logger.info('Fetched TODOs from local database:', todosPlain);
     return todosPlain;
   } catch (err) {
@@ -110,22 +97,14 @@ async function fetchTodosFromLocal() {
   }
 }
 
-
 async function storeInLocalDatabase(todos) {
   try {
     const realm = await getRealm();
     logger.info('Starting to store data in local database');
 
-    // Clear the local database before storing new data
-    realm.write(() => {
-      realm.deleteAll();
-    });
-
-    logger.info('Local database cleared successfully');
-
     realm.write(() => {
       todos.forEach(todo => {
-        logger.info('Storing todo', { todo });
+        logger.info('Storing/Updating todo', { todo });
         realm.create('Todo', {
           _id: new BSON.ObjectId(todo._id),
           todo: todo.todo,
@@ -134,9 +113,9 @@ async function storeInLocalDatabase(todos) {
       });
     });
 
-    logger.info('Data successfully stored in local database', { count: todos.length });
+    logger.info('Data successfully stored/updated in local database', { count: todos.length });
   } catch (err) {
-    logger.error('Error storing data in local database:', err);
+    logger.error('Error storing/updating data in local database:', err);
     throw err;
   }
 }
