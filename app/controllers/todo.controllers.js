@@ -42,13 +42,13 @@ exports.fetchTodos = async (req, res) => {
     const isOnline = await checkNetworkStatus();
 
     let todos;
-    if (isOnline) {
-      logger.info('Client online');
+    // if (isOnline) {
+    //   logger.info('Client online');
       todos = realm.objects('Todo');
-    } else {
-      logger.info('Client offline');
-      todos = realm.objects('Todo');
-    }
+    // } else {
+    //   logger.info('Client offline');
+      // todos = realm.objects('Todo');
+    // }
     const todosPlain = todos.map(todo => ({
       _id: todo._id.toHexString(),
       todo: todo.todo,

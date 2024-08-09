@@ -80,7 +80,6 @@ async function openRealm(syncOnOnline = false) {
 
   const isOnline = await checkNetworkStatus();
 
-  // Close any existing Realm instances
   if (onlineRealmInstance && !onlineRealmInstance.isClosed) {
     logger.info('Closing existing online Realm instance before opening a new one.');
     onlineRealmInstance.close();
@@ -90,7 +89,6 @@ async function openRealm(syncOnOnline = false) {
     offlineRealmInstance.close();
   }
 
-  // Always open the offline Realm first
   offlineRealmInstance = await Realm.open({
     schema: [TodoSchema],
     path: offlineRealmPath,
@@ -107,7 +105,6 @@ async function openRealm(syncOnOnline = false) {
     logger.info('User logged in', { user });
 
     try {
-      // Open the online Realm with sync enabled
       onlineRealmInstance = await Realm.open({
         schema: [TodoSchema],
         sync: {
@@ -127,16 +124,14 @@ async function openRealm(syncOnOnline = false) {
 
       logger.info('Connected to MongoDB Realm and syncing cloud data to local offline Realm.');
 
-      // Sync cloud data to the offline database
       await syncCloudToLocal();
 
     } catch (syncErr) {
       if (syncErr.message.includes("Incompatible histories")) {
         logger.error('Incompatible histories detected. Attempting to clear local data...');
 
-        // Clear the local offline database and retry opening Realm
         await clearLocalDatabase(offlineRealmPath);
-        offlineRealmInstance = await openRealm(syncOnOnline); // Retry after clearing
+        offlineRealmInstance = await openRealm(syncOnOnline); 
       } else {
         throw syncErr;
       }
