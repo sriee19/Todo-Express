@@ -1,54 +1,7 @@
 const getRealm = require('../config/realm_config');
 const logger = require('../config/logger');
-const dns = require('dns');
 const BSON = require('bson');
-
-async function checkNetworkStatus() {
-  return new Promise((resolve) => {
-    dns.resolve('www.google.com', (err) => {
-      resolve(!err);
-    });
-  });
-}
-
-
-
-async function fetchTodosFromLocal() {
-  try {
-    const realm = await getRealm();
-    const todos = realm.objects('Todo');
-    const todosPlain = todos.map(todo => ({
-      _id: todo._id.toHexString(),
-      todo: todo.todo,
-      done: todo.done
-    }));
-    
-    logger.info('Fetched TODOs from local database:', todosPlain);
-    return todosPlain;
-  } catch (err) {
-    logger.error('Error fetching TODOs from local database:', err);
-    throw err;
-  }
-}
-
-async function fetchTodosFromCloud() {
-  try {
-    const realm = await getRealm();
-    const todos = realm.objects('Todo');
-    const todosPlain = todos.map(todo => ({
-      _id: todo._id.toHexString(),
-      todo: todo.todo,
-      done: todo.done
-    }));
-    
-    logger.info('Fetched TODOs from cloud:', todosPlain);
-    return todosPlain;
-  } catch (err) {
-    logger.error('Error fetching TODOs from cloud:', err);
-    throw err;
-  }
-}
-
+const dns = require('dns');
 
 exports.addTodo = async (req, res) => {
   const { todo } = req.body;
@@ -75,6 +28,14 @@ exports.addTodo = async (req, res) => {
   }
 };
 
+async function checkNetworkStatus() {
+  return new Promise((resolve) => {
+    dns.resolve('www.google.com', (err) => {
+      resolve(!err);
+    });
+  });
+}
+
 exports.fetchTodos = async (req, res) => {
   try {
     const realm = await getRealm();
@@ -83,12 +44,18 @@ exports.fetchTodos = async (req, res) => {
     let todos;
     if (isOnline) {
       logger.info('Client online');
-      todos = await fetchTodosFromCloud(); 
+      todos = realm.objects('Todo');
     } else {
       logger.info('Client offline');
-      todos = await fetchTodosFromLocal();
+      todos = realm.objects('Todo');
     }
-    res.status(200).json(todos);
+    const todosPlain = todos.map(todo => ({
+      _id: todo._id.toHexString(),
+      todo: todo.todo,
+      done: todo.done,
+    }));
+
+    res.status(200).json(todosPlain);
   } catch (err) {
     logger.error('Error fetching TODOs:', err);
     res.status(500).send('Internal Server Error');
